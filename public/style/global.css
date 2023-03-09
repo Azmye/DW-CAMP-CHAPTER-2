@@ -1,0 +1,53 @@
+.icon-links .btn:hover {
+  color: orangered !important;
+}
+.icon-links .btn i {
+  width: 32px;
+}
+
+.shadow-extra {
+  box-shadow: 0 0 36px #bbb;
+}
+
+@media screen and (max-width: 992px) {
+  #profile-card .left {
+    width: 100% !important;
+  }
+
+  #profile-card .right {
+    width: 50% !important;
+    margin: 0 auto;
+  }
+
+  #project-form form {
+    width: 100% !important;
+  }
+  #contact-form form {
+    width: 100% !important;
+  }
+
+  #project-detail .left {
+    width: 100% !important;
+  }
+
+  #project-detail .right {
+    width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  #profile-card .right {
+    width: 100% !important;
+    margin: 0 auto;
+  }
+  #project-detail .left img {
+    height: 255px !important;
+    object-fit: cover !important;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  #profile-card {
+    padding: 3rem 12px !important;
+  }
+}
