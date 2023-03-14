@@ -47,6 +47,8 @@
       <div class="container">
         <h2 class="text-center mb-5">ADD MY PROJECT</h2>
         <form action="{{.Action}}" method="post" class="w-50 mx-auto">
+          <!-- IDs for edit/update data -->
+          <input type="text" value="{{.Project.ID}}" class="d-none" name="id" />
           <div class="mb-3">
             <label for="projectName" class="form-label fw-bold">Project Name</label>
             <input type="text" class="form-control" name="projectName" id="projectName" value="{{.Project.ProjectName}}" required />
@@ -55,11 +57,11 @@
           <div class="mb-3 d-flex gap-3">
             <div class="start-date w-50">
               <label for="startDate" class="form-label fw-bold">Start Date</label>
-              <input type="date" class="form-control" name="startDate" id="startDate" value="{{.Project.StartDate}}" required />
+              <input type="date" class="form-control" name="startDate" id="startDate" value="{{.Project.StartDateStr}}" required />
             </div>
             <div class="end-date w-50">
               <label for="endDate" class="form-label fw-bold">End Date</label>
-              <input type="date" class="form-control" name="endDate" id="endDate" value="{{.Project.EndDate}}" required />
+              <input type="date" class="form-control" name="endDate" id="endDate" value="{{.Project.EndDateStr}}" required />
             </div>
           </div>
 

@@ -44,13 +44,11 @@
 
     <!-- Project Detail -->
     <section id="project-detail" class="py-5">
-      {{range $index, $data := .Project}}
       <div class="container">
-        <h2 class="text-center pb-3 pb-lg-5">{{$data.ProjectName}}</h2>
-
+        <h2 class="text-center pb-3 pb-lg-5">{{.Project.ProjectName}}</h2>
         <div class="d-flex flex-column flex-lg-row gap-5">
           <div class="left w-75">
-            <img src="{{$data.Image}}" alt="" class="w-100" style="height: 480px; object-fit: cover" />
+            <img src="{{.Project.Image}}" alt="" class="w-100" style="height: 480px; object-fit: cover" />
           </div>
           <div class="right w-25 px-3">
             <!-- Duration -->
@@ -59,11 +57,11 @@
               <ul class="list-unstyled">
                 <li class="mb-3">
                   <i class="fa-regular fa-calendar fa-xl"></i>
-                  <span class="fs-5 ps-1 fw-semibold">{{ $data.StartDate.Format "02-01-2006" }} - {{ $data.EndDate.Format "02-01-2006" }}</span>
+                  <span class="fs-5 ps-1 fw-semibold">{{ .Project.StartDateStr }} - {{ .Project.EndDateStr }}</span>
                 </li>
                 <li class="mb-3">
                   <i class="fa-regular fa-clock fa-xl"></i>
-                  <span class="fs-5 ps-1 fw-semibold">1 Month</span>
+                  <span class="fs-5 ps-1 fw-semibold">{{.Project.Difference}}</span>
                 </li>
               </ul>
             </div>
@@ -74,7 +72,7 @@
               <h4>Technologies</h4>
               <ul class="list-unstyled d-flex flex-wrap">
                 <!-- loop TechIcon  -->
-                {{range $key, $value := $data.TechIcon}}
+                {{range $key, $value := .Project.TechIcon}}
                 <!-- // -->
                 {{if eq $value "NodeJs"}}
                 <li class="w-50 mb-2 text-start">
@@ -114,10 +112,9 @@
 
         <div class="mt-5 w-100" style="text-align: justify">
           <h3>Description</h3>
-          <p>{{$data.Description}}</p>
+          <p>{{.Project.Description}}</p>
         </div>
       </div>
-      {{end}}
     </section>
     <!-- Project Detail End -->
 

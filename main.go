@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
@@ -18,52 +19,16 @@ type Template struct {
 }
 
 type ProjectDb struct {
-	ID          int
-	ProjectName string
-	StartDate   time.Time
-	EndDate     time.Time
-	Description string
-	TechIcon    []string
-	Image       string
-}
-type Project struct {
-	ID          int
-	ProjectName string
-	StartDate   string
-	EndDate     string
-	Description string
-	TechIcon    map[string]string
-	Image       string
-}
-
-var projectsData = []Project{
-	{
-		ProjectName: "Dumbways Way App",
-		StartDate:   "12 Jan 2023",
-		EndDate:     "15 Jan 2023",
-		Description: "App Project that can make you're coding life easier, this app built with React, and NodeJs.",
-		TechIcon: map[string]string{
-			"Javascript": "",
-			"Go":         "",
-			"NodeJs":     "on",
-			"ReactJs":    "on",
-		},
-
-		Image: "https://source.unsplash.com/random/900*700?tech,programming",
-	},
-	{
-		ProjectName: "Scheduler.IO",
-		StartDate:   "5 Mar 2022",
-		EndDate:     "15 Mar 2022",
-		Description: "App Project that can make you're  life easier, this app built with React, and Golang.",
-		TechIcon: map[string]string{
-			"Javascript": "on",
-			"Go":         "on",
-			"NodeJs":     "",
-			"ReactJs":    "",
-		},
-		Image: "https://source.unsplash.com/random/900*700?games,football",
-	},
+	ID           int
+	ProjectName  string
+	StartDate    time.Time
+	EndDate      time.Time
+	StartDateStr string
+	EndDateStr   string
+	Description  string
+	TechIcon     []string
+	Image        string
+	Difference   string
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
@@ -110,6 +75,13 @@ func home(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
 		}
 
+		each.Difference = dateDifference(each.StartDate, each.EndDate)
+
+		words := strings.Fields(each.Description)
+		if len(words) > 18 {
+			each.Description = strings.Join(words[:18], " ") + "..."
+		}
+
 		results = append(results, each)
 	}
 	projects := map[string]interface{}{
@@ -125,11 +97,11 @@ func contactForm(c echo.Context) error {
 
 func projectForm(c echo.Context) error {
 
-	var Projects = Project{
-		ProjectName: "",
-		StartDate:   "",
-		EndDate:     "",
-		Description: "",
+	var Projects = ProjectDb{
+		ProjectName:  "",
+		StartDateStr: "",
+		EndDateStr:   "",
+		Description:  "",
 	}
 
 	sendDatas := map[string]interface{}{
@@ -142,37 +114,34 @@ func projectForm(c echo.Context) error {
 }
 
 func projectAdd(c echo.Context) error {
-	projectName := c.FormValue("projectName")
+	name := c.FormValue("projectName")
 	startDate := c.FormValue("startDate")
 	endDate := c.FormValue("endDate")
 	description := c.FormValue("description")
-	techIcon := map[string]string{
-		"Javascript": c.FormValue("javascript"),
-		"Go":         c.FormValue("go"),
-		"NodeJs":     c.FormValue("nodeJs"),
-		"ReactJs":    c.FormValue("reactJs"),
-	}
-	image := " https://source.unsplash.com/random/900*700?programming, tech, game"
+	techonologies := []string{}
 
-	println("Project Name : " + projectName)
-	println("Start Date : " + startDate)
-	println("End Date : " + endDate)
-	println("Description :" + description)
-	for k, v := range techIcon {
-		fmt.Printf("%s: %s\n", k, v)
+	if c.FormValue("nodeJs") == "on" {
+		techonologies = append(techonologies, "NodeJs")
 	}
-
-	var newProject = Project{
-		ProjectName: projectName,
-		StartDate:   startDate,
-		EndDate:     endDate,
-		Description: description,
-		TechIcon:    techIcon,
-		Image:       image,
+	if c.FormValue("reactJs") == "on" {
+		techonologies = append(techonologies, "ReactJs")
+	}
+	if c.FormValue("javascript") == "on" {
+		techonologies = append(techonologies, "Javascript")
+	}
+	if c.FormValue("go") == "on" {
+		techonologies = append(techonologies, "Go")
 	}
 
-	projectsData = append(projectsData, newProject)
+	startDateVal, _ := time.Parse("2006-01-02", startDate)
+	endDateVal, _ := time.Parse("2006-01-02", endDate)
 
+	image := "https://source.unsplash.com/random/900*700?games,football"
+
+	_, err := connection.Conn.Exec(context.Background(), "INSERT INTO tb_projects (name, start_date, end_date, description, technologies, image) VALUES ($1, $2, $3, $4, $5, $6)", name, startDateVal, endDateVal, description, techonologies, image)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
+	}
 	return c.Redirect(http.StatusMovedPermanently, "/")
 
 }
@@ -180,34 +149,33 @@ func projectAdd(c echo.Context) error {
 func projectDetail(c echo.Context) error {
 
 	id, _ := strconv.Atoi(c.Param("id"))
-	data, _ := connection.Conn.Query(context.Background(), "SELECT id, name, start_date, end_date, description, technologies, image FROM public.tb_projects WHERE id=$1", id)
 
-	var results []ProjectDb
+	var projectDets = ProjectDb{}
+	err := connection.Conn.QueryRow(context.Background(), "SELECT id, name, start_date, end_date, description, technologies, image FROM tb_projects WHERE id=$1", id).Scan(&projectDets.ID, &projectDets.ProjectName, &projectDets.StartDate, &projectDets.EndDate, &projectDets.Description, &projectDets.TechIcon, &projectDets.Image)
 
-	for data.Next() {
-		var each = ProjectDb{}
-
-		err := data.Scan(&each.ID, &each.ProjectName, &each.StartDate, &each.EndDate, &each.Description, &each.TechIcon, &each.Image)
-
-		if err != nil {
-			fmt.Println(err.Error())
-			return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
-		}
-
-		results = append(results, each)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
 	}
 
+	projectDets.StartDateStr = projectDets.StartDate.Format("02 Jan 2006")
+	projectDets.EndDateStr = projectDets.EndDate.Format("02 Jan 2006")
+
+	projectDets.Difference = dateDifference(projectDets.StartDate, projectDets.EndDate)
+
 	sendProjectDets := map[string]interface{}{
-		"Project": results,
+		"Project": projectDets,
 	}
 
 	return c.Render(http.StatusOK, "project-detail.html", sendProjectDets)
 }
 
 func projectDelete(c echo.Context) error {
-	id, _ := strconv.Atoi("id")
+	id, _ := strconv.Atoi(c.Param("id"))
 
-	projectsData = append(projectsData[:id], projectsData[id+1:]...)
+	_, err := connection.Conn.Exec(context.Background(), "DELETE FROM public.tb_projects WHERE id=$1", id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
+	}
 
 	return c.Redirect(http.StatusMovedPermanently, "/")
 }
@@ -216,23 +184,18 @@ func projectEditForm(c echo.Context) error {
 
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	var Projects = Project{}
+	var projectDets = ProjectDb{}
+	err := connection.Conn.QueryRow(context.Background(), "SELECT id, name, start_date, end_date, description, technologies, image FROM tb_projects WHERE id=$1", id).Scan(&projectDets.ID, &projectDets.ProjectName, &projectDets.StartDate, &projectDets.EndDate, &projectDets.Description, &projectDets.TechIcon, &projectDets.Image)
 
-	for idx, data := range projectsData {
-		if id == idx {
-			Projects = Project{
-				ProjectName: data.ProjectName,
-				StartDate:   data.StartDate,
-				EndDate:     data.EndDate,
-				Description: data.Description,
-				TechIcon:    data.TechIcon,
-				Image:       data.Image,
-			}
-		}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
 	}
 
+	projectDets.StartDateStr = projectDets.StartDate.Format("2006-01-02")
+	projectDets.EndDateStr = projectDets.EndDate.Format("2006-01-02")
+
 	sendDatas := map[string]interface{}{
-		"Project": Projects,
+		"Project": projectDets,
 		"Button":  `<button type="submit" class="btn btn-dark rounded-5 px-4 py-1">Edit</button>`,
 		"Action":  "/project-edit",
 	}
@@ -241,18 +204,59 @@ func projectEditForm(c echo.Context) error {
 }
 
 func projectEdit(c echo.Context) error {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id := c.FormValue("id")
 
-	projectsData[id].ProjectName = c.FormValue("projectName")
-	projectsData[id].StartDate = c.FormValue("startDate")
-	projectsData[id].EndDate = c.FormValue("endDate")
-	projectsData[id].Description = c.FormValue("description")
-	projectsData[id].TechIcon = map[string]string{
-		"Javascript": c.FormValue("javascript"),
-		"Go":         c.FormValue("go"),
-		"NodeJs":     c.FormValue("nodeJs"),
-		"ReactJs":    c.FormValue("reactJs"),
+	name := c.FormValue("projectName")
+	startDate := c.FormValue("startDate")
+	endDate := c.FormValue("endDate")
+	description := c.FormValue("description")
+	techonologies := []string{}
+
+	if c.FormValue("nodeJs") == "on" {
+		techonologies = append(techonologies, "NodeJs")
+	}
+	if c.FormValue("reactJs") == "on" {
+		techonologies = append(techonologies, "ReactJs")
+	}
+	if c.FormValue("javascript") == "on" {
+		techonologies = append(techonologies, "Javascript")
+	}
+	if c.FormValue("go") == "on" {
+		techonologies = append(techonologies, "Go")
+	}
+
+	startDateVal, _ := time.Parse("2006-01-02", startDate)
+	endDateVal, _ := time.Parse("2006-01-02", endDate)
+
+	image := "https://source.unsplash.com/random/900*700?games,football"
+
+	_, err := connection.Conn.Exec(context.Background(), "UPDATE public.tb_projects SET name=$2, start_date=$3, end_date=$4, description=$5, technologies=$6, image=$7 WHERE id=$1", id, name, startDateVal, endDateVal, description, techonologies, image)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"Message": err.Error()})
 	}
 
 	return c.Redirect(http.StatusMovedPermanently, "/")
+}
+
+func dateDifference(startDate time.Time, endDate time.Time) string {
+	var difference string
+
+	diff := endDate.Sub(startDate)
+	getDiffMonths := diff.Hours() / 24 / 30
+	getDiffWeeks := diff.Hours() / 24 / 7
+	getDiffDays := diff.Hours() / 24
+	getDiffHours := diff.Hours()
+
+	if getDiffMonths >= 1 {
+		difference = fmt.Sprint(int(getDiffMonths), " Months")
+	} else if getDiffWeeks >= 1 {
+		difference = fmt.Sprint(int(getDiffWeeks), " Weeks")
+	} else if getDiffDays >= 1 {
+		difference = fmt.Sprint(int(getDiffDays), " Days")
+	} else {
+		difference = fmt.Sprint(int(getDiffHours), " Hours")
+	}
+
+	return difference
 }

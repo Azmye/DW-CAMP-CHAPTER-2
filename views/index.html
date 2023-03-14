@@ -109,7 +109,7 @@
               <a href="/project-detail/{{$data.ID}}" class="w-100 overflow-hidden rounded-3 mb-2" style="height: 255px"><img src="{{$data.Image}}" alt="{{$data.ProjectName}}" class="w-100" style="height: 255px; object-fit: cover" /></a>
               <div class="card-body p-0">
                 <h5 class="card-title mb-0"><a href="/project-detail/{{$data.ID}}" class="text-black text-decoration-none">{{$data.ProjectName}}</a></h5>
-                <p class="card-text text-secondary" style="font-size: 12px">Duration : 3 Months</p>
+                <p class="card-text text-secondary" style="font-size: 12px">Duration : {{$data.Difference}}</p>
                 <p class="card-text">{{$data.Description}}</p>
                 <ul class="list-unstyled d-flex gap-3 mb-3">
                   <!-- loop TechIcon  -->
@@ -136,10 +136,10 @@
                 </ul>
                 <ul class="list-unstyled d-flex gap-1 mb-2">
                   <li class="w-50">
-                    <a href="/project-edit-form/{{$index}}" class="w-100 p-0 btn btn-dark text-light">edit</a>
+                    <a href="/project-edit-form/{{$data.ID}}" class="w-100 p-0 btn btn-dark text-light">edit</a>
                   </li>
                   <li class="w-50">
-                    <a href="/project-delete/{{$index}}" class="w-100 p-0 btn btn-dark text-light">delete</a>
+                    <a href="/project-delete/{{$data.ID}}" class="w-100 p-0 btn btn-dark text-light">delete</a>
                   </li>
                 </ul>
               </div>
